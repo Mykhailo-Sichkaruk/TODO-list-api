@@ -1,13 +1,14 @@
-import express from "express";
-import cors from "cors";
-import * as bodyParser from "body-parser";
-import * as dotenv from "dotenv";
-import consola, { Consola } from "consola";
 import { PrismaClient } from "@prisma/client";
+import consola, { Consola } from "consola";
+import * as bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import { Auth } from "./routes/Auth";
 import { List } from "./routes/List";
 import { Task } from "./routes/Task";
+import * as dotenv from "dotenv";
+import express, {  } from "express";
+import cors from "cors";
+import errorHandler from "./middleware/error-handler";
 
 export class Server {
 	public app: express.Application;
@@ -34,6 +35,7 @@ export class Server {
 		this.app.use(bodyParser.json());
 		this.app.use(bodyParser.urlencoded({ extended: true }));
 		this.app.use(cookieParser());
+		this.app.use(errorHandler);
 	}
 
 	private setRequestlogger() {
