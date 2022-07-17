@@ -102,6 +102,40 @@ Task.delete("/",
 		res.status(200).json({ success: "true", message: "Task deleted" });
 	});
 
+Task.put("/",
+	body("id").exists().withMessage("id of task must be provided"),
+	body("listId").exists().withMessage("listId of task must be provided"),
+	body("status").isIn(["ACTIVE", "DONE", "CLOSED", "IN_PROGRESS", undefined]).withMessage("Status must be in : [ACTIVE, DONE, CLOSED, IN_PROGRESS]"),
+	async (req: express.Request, res: express.Response) => {
+		// Check if input is valid
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			res.status(400).json({ success: "false", message: "Invalid input", errors: errors.array() });
+			return;
+		}
+		// Check if user is authorized
+		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
+		if (!verifyToken(token)) {
+			res.status(401).json({ success: "false", message: "Unauthorized" });
+			return;
+		}
+		const { id, listId, status } = req.body;
+		// Check if task exists
+		const task = await prisma.task.findUnique({ where: { id } });
+		if (!task) {
+			res.status(404).json({ success: "false", message: "Task not found" });
+			return;
+		}
+		// Check if user is member of list
+		const user =  await prisma.list.findFirst({ where: { id: listId, subscribers: { some: { id: getTokenId(token) } } } });
+		if (!user) {
+			res.status(404).json({ success: "false", message: `You are not member of ${task.id}. \nPlease ask author of this Todo-list to add you` });
+			return;
+		}
+		// Update task
+		await prisma.task.update({ where: { id }, data: { status } });
+		res.status(200).json({ success: "true", message: "Task updated" });
+	});
 
 function checkDeadline(value: string | number | Date, { req }: Meta) {
 	if (!value) {
