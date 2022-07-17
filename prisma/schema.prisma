@@ -20,7 +20,7 @@ model User {
 
 model List {
   id          String @id @default(cuid())
-  name        String
+  title       String
   subscribers User[]
   items       Task[]
 }
@@ -34,7 +34,7 @@ model Task {
   authorId String
   list     List     @relation(fields: [listId], references: [id])
   listId   String
-  status   Status
+  status   Status   @default(ACTIVE)
 }
 
 enum Status {

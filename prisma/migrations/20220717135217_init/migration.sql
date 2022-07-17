@@ -13,7 +13,7 @@ CREATE TABLE "User" (
 -- CreateTable
 CREATE TABLE "List" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
 
     CONSTRAINT "List_pkey" PRIMARY KEY ("id")
 );
@@ -26,7 +26,7 @@ CREATE TABLE "Task" (
     "deadline" TIMESTAMP(3) NOT NULL,
     "authorId" TEXT NOT NULL,
     "listId" TEXT NOT NULL,
-    "status" "Status" NOT NULL,
+    "status" "Status" NOT NULL DEFAULT 'ACTIVE',
 
     CONSTRAINT "Task_pkey" PRIMARY KEY ("id")
 );
