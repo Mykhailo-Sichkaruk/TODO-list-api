@@ -9,6 +9,8 @@ import * as dotenv from "dotenv";
 import express, {  } from "express";
 import cors from "cors";
 import errorHandler from "./middleware/error-handler";
+import swaggerJSDoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
 
 export class Server {
 	public app: express.Application;
@@ -25,7 +27,8 @@ export class Server {
 		this.setRequestlogger();
 
 		this.app.listen(process.env.PORT, () => {
-			console.log(`Server running on port ${process.env.PORT}`);
+			console.log(`Server running on localhost:${process.env.PORT}`);
+			this.setSwagger();
 		});
 	}
 
@@ -47,11 +50,33 @@ export class Server {
 
 	private setRoutes() {
 		this.app.get("/", (_req, res) => {
-			res.send("Hello World!");
+			res.send("Todo-list api");
 		});
 
-		this.app.use("/api/v1/auth", Auth);
-		this.app.use("/api/v1/list", List);
-		this.app.use("/api/v1/task", Task);
+		this.app.use("/auth", Auth);
+		this.app.use("/list", List);
+		this.app.use("/task", Task);
+	}
+
+	private setSwagger() {
+		const swaggerOptions = {
+			definition: {
+				openapi: "3.0.0",
+				info: {
+					title: "Task API",
+					version: "1.0.0",
+					description: "Task API",
+				},
+				servers: [
+					{
+						url: "http://localhost:4000",
+						description: "Local server",
+					},
+				],
+			},
+			apis: ["./src/server/routes/*.ts", "./src/server/server.ts"],
+		};
+		const swaggerSpec = swaggerJSDoc(swaggerOptions);
+		this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 	}
 }
