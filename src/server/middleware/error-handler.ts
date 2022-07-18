@@ -23,7 +23,7 @@ function handleError(
 		customError = new CustomError(err.message, 400);
 	}
 
-	res.status((customError as CustomError).status).json({
+	res.status(444).json({
 		success: "false",
 		message: "Error",
 		error: customError.message,
