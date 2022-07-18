@@ -7,19 +7,75 @@ import { AUTH } from "../../constants";
 export const Auth = Router();
 const prisma = new PrismaClient();
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     AuthRequest:
+ *       type: object
+ *       required:
+ *         - login
+ *         - password
+ *       properties:
+ *         login:
+ *           type: string
+ *           minLength: 3
+ *           maxLength: 255
+ *           default: "admin"
+ *         password:
+ *           type: string
+ *           minLength: 3
+ *           maxLength: 255
+ *           default: "admin"
+ *     AuthResponse:
+ *       type: object
+ *       required:
+ *         - success
+ *         - message
+ *         - token
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           default: true
+ *         message:
+ *           type: string
+ *           default: "Success"
+ *         token:
+ *           type: string
+ *           default: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNsNXBleWZjcDAwMDI1d3RhamFpYTFqY2MiLCJpYXQiOjE2NTgwNjgxMzIsImV4cCI6MTY1ODA3MTczMn0.5EPU0LzjBdK5gm3lp_f49C-yM5vu4eWHDALLXHCk7sg" 
+ */
 
 /**
- * @api {post} /auth/register Login
- * @apiName Register
- * @apiGroup Auth
- * @apiVersion 1.0.0
- * @apiDescription Register a new user
- * @apiBody {String} login: Login of the user
- * @apiBody {String} password: Password of the user
- */
+* @swagger
+* /auth/register:
+*   post:
+*     description: Register and get token
+*     summary: Register and get token
+*     requestBody:
+*       required: true
+*       content: 
+*         application/json:
+*           schema:
+*             $ref: '#/components/schemas/AuthRequest'
+*     responses:
+*       200:
+*         description: Success
+*         content: 
+*           application/json:
+*             schema:
+*               $ref: '#/components/schemas/AuthResponse'
+*       400:
+*         description: Invalid input
+*         content:
+*           application/json:
+*       409: 
+*         description: User already exists
+*       444:
+*         description: JSON parse error
+*/
 Auth.post("/register",
-	body("login").isLength({ min: AUTH.LOGIN_MIN_LENGTH }).withMessage("Login must be at least 3 characters long"),
-	body("password").isLength({ min: AUTH.PASSWORD_MIN_LENGTH }).withMessage("Password must be at least 3 characters long"),
+	body("login").exists().isLength(AUTH.LOGIN).withMessage("Login must be min 3, max 255 characters long"),
+	body("password").exists().isLength(AUTH.PASSWORD).withMessage("Login must be min 3, max 255 characters long"),
 	async (req, res) => {
 		// Check if input is valid
 		const errors = validationResult(req);
@@ -30,33 +86,46 @@ Auth.post("/register",
 		const { login, password } = req.body;
 		const user = await prisma.user.findUnique({ where: { login } });
 		if (user) {
-			res.status(200).json({ success: "false", message: "User already exists" });
+			res.status(409).json({ success: "false", message: "User already exists" });
 			return;
 		}
 		// Create user
 		const newUser = await prisma.user.create({ data: { login, password } });
 		const token = jwt.sign({ id: newUser.id }, `${process.env.JWT_SECRET}`, { expiresIn: "1h" });
-		res.status(401).json({ success: "true", message: `You've signed up, your token is valid for ${AUTH.TOKEN_VALIDATION_TIME}`, token });
+		res.status(200).json({ success: "true", message: `You've signed up, your token is valid for ${AUTH.TOKEN_VALIDATION_TIME}`, token });
 	});
 
+
 /**
- * @api {post} /auth/login Login
- * @apiName Login
- * @apiGroup Auth
- * @apiVersion 1.0.0
- * @apiDescription Login a user
- * @apiBody {String} login: Login of the user
- * @apiBody {String} password: Password of the user
- * @apiSuccess {String} token: JWT token
- */
-Auth.post("/login",
-	body("login").isLength({ min: 3 }).withMessage("Login must be at least 3 characters long"),
-	body("password").isLength({ min: 3 }).withMessage("Password must be at least 3 characters long"),
+ * @swagger
+ * /auth/login:
+ *   get:
+ *     summary: Login user
+ *     description: Login user
+ *     requestBody:
+ *       required: true
+ *       content: 
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AuthRequest'
+ *     responses:
+ *       200: 
+ *         description: Signed in 
+ *       400:
+ *         description: Incorrect input
+ *       401: 
+ *         description: User not found
+ *       402:
+ *         description: Wrong password
+*/
+Auth.get("/login",
+	body("login").exists().isLength(AUTH.LOGIN).withMessage("Login must be at least 3 characters long"),
+	body("password").exists().isLength(AUTH.PASSWORD).withMessage("Password must be at least 3 characters long"),
 	async (req, res) => {
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
-			return res.status(400).json({ success: "false", messaga: "Incorrect input", errors: errors.array() });
+			return res.status(400).json({ success: "false", messaga: "Invalid request", errors: errors.array() });
 		}
 		// Check if user is registered
 		const { login, password } = req.body;
@@ -67,13 +136,12 @@ Auth.post("/login",
 		}
 		// Check if password is correct
 		if (user.password !== password) {
-			res.status(401).json({ success: "false", message: "Wrong password" });
+			res.status(402).json({ success: "false", message: "Wrong password" });
 			return;
 		}
 		// Login user and send token
 		const token = jwt.sign({ id: user.id }, `${process.env.JWT_SECRET}`, { expiresIn: "1h" });
 		res.status(200).json({ success: "true", message: token });
-
 	});
 
 export async function verifyToken(token: string) {
