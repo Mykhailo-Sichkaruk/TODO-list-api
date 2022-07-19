@@ -179,22 +179,20 @@ export const List = Router();
  *               $ref: '#/components/schemas/ErrorInvalidInput'
  *       401:
  *         description: Unauthorized
+ *       444:
+ *         description: JSON parse error
 */
 List.post("/",
 	body("title").exists().isLength({ min: 1 }).withMessage("Title must be at least 1 characters long"),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
-		if (!errors.isEmpty()) {
-			res.status(400).json({ success: "false", message: "Invalid input", errors: errors.array() });
-			return;
-		}
+		if (!errors.isEmpty())
+			return res.status(400).json({ success: "false", message: "Invalid input", errors: errors.array() });
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
-		if (!verifyToken(token)) {
+		if (!verifyToken(token))
 			res.status(401).json({ success: "false", message: "Unauthorized" });
-			return;
-		}
 		// Create List
 		const { title } = req.body;
 		const list = await prisma.list.create({ data: { title, subscribers: { connect: { id: getTokenId(token) } } } });
@@ -236,23 +234,17 @@ List.delete("/",
 	async (req, res) => {
 		// Check if input is valid
 		const errors = validationResult(req);
-		if (!errors.isEmpty()) {
-			res.status(400).json({ success: "false", message: "Invalid input", errors: errors.array() });
-			return;
-		}
+		if (!errors.isEmpty())
+			return res.status(400).json({ success: "false", message: "Invalid input", errors: errors.array() });
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
-		if (!verifyToken(token)) {
-			res.status(401).json({ success: "false", message: "Unauthorized" });
-			return;
-		}
+		if (!verifyToken(token))
+			return res.status(401).json({ success: "false", message: "Unauthorized" });
 		// Check if list exists
 		const { id } = req.body;
 		const list = await prisma.list.findUnique({ where: { id } });
-		if (!list) {
-			res.status(404).json({ success: "false", message: "List does not exist" });
-			return;
-		}
+		if (!list)
+			return res.status(404).json({ success: "false", message: "List does not exist" });
 		// Delete list
 		await prisma.list.delete({ where: { id } });
 		res.status(200).json({ success: "true", message: list });
@@ -294,32 +286,25 @@ List.delete("/",
  */
 List.put("/",
 	body("id").exists().isString().isLength({ min: 1 }).withMessage("Id must be at least 1 characters long"),
-	body("name").exists().isString().isLength({ min: 1 }).withMessage("Name must be at least 1 characters long"),
+	body("title").exists().isString().isLength({ min: 1 }).withMessage("Name must be at least 1 characters long"),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
-		if (!errors.isEmpty()) {
+		if (!errors.isEmpty())
 			return res.status(400).json({ success: "false", messaga: "Incorrect input", errors: errors.array() });
-		}
 		// CHeck if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
-		if (!verifyToken(token)) {
-			res.status(400).json({ success: "false", message: "Unauthorized" });
-			return;
-		}
+		if (!verifyToken(token))
+			return res.status(400).json({ success: "false", message: "Unauthorized" });
 		// Check if list exists
 		const { id, title } = req.body;
 		let list = await prisma.list.findUnique({ where: { id } });
-		if (!list) {
-			res.status(404).json({ success: "false", message: "List not found" });
-			return;
-		}
+		if (!list)
+			return res.status(404).json({ success: "false", message: "List not found" });
 		// Check if request sender is a member of the list
 		const author =  await prisma.list.findFirst({ where: { id, subscribers: { some: { id: getTokenId(token) } } } });
-		if (!author) {
-			res.status(406).json({ success: "false", message: `You are not member of ${list.title}(${list.id}). \nPlease ask author of this Todo-list to add you` });
-			return;
-		}
+		if (!author)
+			return res.status(406).json({ success: "false", message: `You are not member of ${list.title}(${list.id}). \nPlease ask author of this Todo-list to add you` });
 		// Update list title
 		list = await prisma.list.update({ where: { id }, data: { title } });
 		res.status(200).json({ success: "true", message: list });
@@ -352,20 +337,17 @@ List.put("/",
 List.get("/", async (req: express.Request, res: express.Response) => {
 	// Check if user is authorized
 	const token = req.headers.authorization?.split(" ")[ 1 ] || "";
-	if (!verifyToken(token)) {
-		res.status(401).json({ success: "false", message: "Unauthorized" });
-		return;
-	}
+	if (!verifyToken(token))
+		return res.status(401).json({ success: "false", message: "Unauthorized" });
 	// Send all lists with tasks
 	const lists = await prisma.list.findMany({
 		where: { subscribers: { some: { id: getTokenId(token) } } },
 		include: { items: true },
 	});
 	// Check if user has any lists
-	if (!lists) {
-		res.status(404).json({ success: "false", message: "No lists found" });
-		return;
-	}
+	if (!lists)
+		return res.status(404).json({ success: "false", message: "No lists found" });
+	// Send lists
 	res.status(200).json({ success: "true", message: lists });
 });
 
@@ -392,21 +374,15 @@ List.get("/", async (req: express.Request, res: express.Response) => {
 List.get("/:id", async (req: express.Request, res: express.Response) => {
 	// Check if user is authorized
 	const token = req.headers.authorization?.split(" ")[ 1 ] || "";
-	if (!verifyToken(token)) {
-		res.status(401).json({ success: "false", message: "Unauthorized" });
-		return;
-	}
+	if (!verifyToken(token))
+		return res.status(401).json({ success: "false", message: "Unauthorized" });
 	// Check if list exists
 	const { id } = req.params;
-	console.log(id);
-	const list = await prisma.list.findUnique({
-		where: { id },
-		include: { items: true } });
-	if (!list) {
-		res.status(404).json({ success: "false", message: "List not found" });
-		return;
-	}
-
+	const list = await prisma.list.findUnique({ where: { id }, include: { items: true } });
+	// Check if list exists
+	if (!list)
+		return res.status(404).json({ success: "false", message: "List not found" });
+	// Send list 
 	res.status(200).json({ success: "true", message: list });
 });
 
@@ -446,34 +422,25 @@ List.post("/subscribe",
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
-		if (!errors.isEmpty()) {
+		if (!errors.isEmpty())
 			return res.status(400).json({ success: "false", messaga: "Incorrect input", errors: errors.array() });
-		}
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
-		if (!verifyToken(token)) {
-			res.status(401).json({ success: "false", message: "Unauthorized" });
-			return;
-		}
+		if (!verifyToken(token))
+			return res.status(401).json({ success: "false", message: "Unauthorized" });
 		// Check if list exists
 		const { listId, userId } = req.body;
 		const listSubscribe = await prisma.list.findUnique({ where: { id: listId } });
-		if (!listSubscribe) {
-			res.status(400).json({ success: "false", message: "List not found" });
-			return;
-		}
+		if (!listSubscribe)
+			return res.status(400).json({ success: "false", message: "List not found" });
 		// Check if request sender is a member of the list
 		const author =  await prisma.list.findFirst({ where: { id: listId, subscribers: { some: { id: getTokenId(token) } } } });
-		if (!author) {
-			res.status(400).json({ success: "false", message: `You are not member of ${listSubscribe.title}. \nPlease ask author of this Todo-list to add you` });
-			return;
-		}
+		if (!author)
+			return res.status(400).json({ success: "false", message: `You are not member of ${listSubscribe.title}. \nPlease ask author of this Todo-list to add you` });
 		// Check if new member exists
 		const user = await prisma.user.findUnique({ where: { id: userId } });
-		if (!user) {
-			res.status(400).json({ success: "false", message: "User not found" });
-			return;
-		}
+		if (!user)
+			return res.status(400).json({ success: "false", message: "User not found" });
 		// Add new member to list
 		const list = await prisma.list.update({ where: { id: listId }, data: { subscribers: { connect: { id: userId } } } });
 		res.status(200).json({ success: "true", message: list });

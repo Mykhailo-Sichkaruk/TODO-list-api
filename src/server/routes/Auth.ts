@@ -63,7 +63,7 @@ const prisma = new PrismaClient();
  *               $ref: '#/components/schemas/AuthRequest'
  *       responses:
  *         200: 
- *           description: Signed up
+ *           description: Signed up, token generated
  *           content:
  *             application/json:
  *               schema:
@@ -81,20 +81,17 @@ Auth.post("/register",
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
-		if (!errors.isEmpty()) {
+		if (!errors.isEmpty())
 			return res.status(400).json({ success: "false", messaga: "Incorrect input", errors: errors.array() });
-		}
 		// Check if user is already registered
 		const { login, password } = req.body;
 		const user = await prisma.user.findUnique({ where: { login } });
-		if (user) {
-			res.status(409).json({ success: "false", message: "User already exists" });
-			return;
-		}
+		if (user)
+			return res.status(409).json({ success: "false", message: "User already exists" });
 		// Create user
 		const newUser = await prisma.user.create({ data: { login, password } });
 		const token = jwt.sign({ id: newUser.id }, `${process.env.JWT_SECRET}`, { expiresIn: AUTH.TOKEN_VALIDATION_TIME });
-		res.status(200).json({ success: "true", message: `You've signed up, your token is valid for ${AUTH.TOKEN_VALIDATION_TIME}`, token });
+		res.status(200).header("Authorization", `Bearer ${token}`).json({ success: "true", message: `You've signed up, your token is valid for ${AUTH.TOKEN_VALIDATION_TIME}`, token });
 	});
 
 
@@ -133,21 +130,16 @@ Auth.post("/login",
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
-		if (!errors.isEmpty()) {
+		if (!errors.isEmpty())
 			return res.status(400).json({ success: "false", messaga: "Invalid request", errors: errors.array() });
-		}
 		// Check if user is registered
 		const { login, password } = req.body;
 		const user = await prisma.user.findUnique({ where: { login } });
-		if (!user) {
-			res.status(404).json({ success: "false", message: "User not found" });
-			return;
-		}
+		if (!user)
+			return res.status(404).json({ success: "false", message: "User not found" });
 		// Check if password is correct
-		if (user.password !== password) {
-			res.status(406).json({ success: "false", message: "Wrong password" });
-			return;
-		}
+		if (user.password !== password)
+			return res.status(406).json({ success: "false", message: "Wrong password" });
 		// Login user and send token
 		const token = jwt.sign({ id: user.id }, `${process.env.JWT_SECRET}`, { expiresIn: AUTH.TOKEN_VALIDATION_TIME });
 		res.status(200).header("Authorization", `Bearer ${token}`).json({ success: "true", message: `You've signed in, your token is valid for ${AUTH.TOKEN_VALIDATION_TIME}`, token });
