@@ -6,7 +6,9 @@
         "lib": [
             "esnext"
         ],
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "moduleResolution": "Node16",
+        "target": "ES2022",
     },
     "exclude": [
         "node_modules"
