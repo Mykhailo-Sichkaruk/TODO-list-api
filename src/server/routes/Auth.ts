@@ -33,6 +33,7 @@ const prisma = new PrismaClient();
  *         - success
  *         - message
  *         - token
+ *         - id
  *       properties:
  *         success:
  *           type: boolean
@@ -43,7 +44,9 @@ const prisma = new PrismaClient();
  *         token:
  *           type: string
  *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNsNXBleWZjcDAwMDI1d3RhamFpYTFqY2MiLCJpYXQiOjE2NTgwNjgxMzIsImV4cCI6MTY1ODA3MTczMn0.5EPU0LzjBdK5gm3lp_f49C-yM5vu4eWHDALLXHCk7sg"
- * 
+ *         id:
+ *           type: string
+ *           example: "cl5pf2wpf000004tal8ai4dus"
  */
 
 /**
@@ -91,7 +94,7 @@ Auth.post("/register",
 		// Create user
 		const newUser = await prisma.user.create({ data: { login, password } });
 		const token = jwt.sign({ id: newUser.id }, `${process.env.JWT_SECRET}`, { expiresIn: AUTH.TOKEN_VALIDATION_TIME });
-		res.status(200).header("Authorization", `Bearer ${token}`).json({ success: "true", message: `You've signed up, your token is valid for ${AUTH.TOKEN_VALIDATION_TIME}`, token });
+		res.status(200).header("Authorization", `Bearer ${token}`).json({ success: "true", message: `You've signed up, your token is valid for ${AUTH.TOKEN_VALIDATION_TIME}`, token, id: newUser.id });
 	});
 
 
@@ -142,7 +145,7 @@ Auth.post("/login",
 			return res.status(406).json({ success: "false", message: "Wrong password" });
 		// Login user and send token
 		const token = jwt.sign({ id: user.id }, `${process.env.JWT_SECRET}`, { expiresIn: AUTH.TOKEN_VALIDATION_TIME });
-		res.status(200).header("Authorization", `Bearer ${token}`).json({ success: "true", message: `You've signed in, your token is valid for ${AUTH.TOKEN_VALIDATION_TIME}`, token });
+		res.status(200).header("Authorization", `Bearer ${token}`).json({ success: "true", message: `You've signed in, your token is valid for ${AUTH.TOKEN_VALIDATION_TIME}`, token, id: user.id });
 	});
 
 export function verifyToken(token: string) {
