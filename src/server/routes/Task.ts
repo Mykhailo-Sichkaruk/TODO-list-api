@@ -101,6 +101,8 @@ export const Task = Router();
  *         description: List not found
  *       406:
  *         description: You are not member of this list
+ *       444:
+ *         description: JSON parse error
  */
 Task.post("/",
 	body("title").isString().isLength({ min: 1 }).withMessage("Title must be at least 1 characters long"),
@@ -160,6 +162,8 @@ Task.post("/",
  *         description: Task not found
  *       406:
  *         description: You are not author of this task
+ *       444:
+ *         description: JSON parse error
 */
 Task.delete("/",
 	body("id").notEmpty().withMessage("id of task must be provided"),
@@ -211,7 +215,9 @@ Task.delete("/",
  *       404:
  *         description: Task not found
  *       406:
- *         description: You are not author of this task 
+ *         description: You are not author of this task
+ *       444:
+ *         description: JSON parse error
  */
 Task.put("/",
 	body("id").exists().withMessage("id of task must be provided"),
@@ -241,7 +247,7 @@ Task.put("/",
 
 function checkDeadline(value: string | number | Date, { req }: Meta) {
 	if (!value) {
-		return new Date(Date.now() + (1000 * 60 * 60 * 24));
+		return new Date(Date.now() + (1000 * 60 * 60 * 24)); // 1 day from now
 	} else if (value instanceof Date) {
 		return req.body.deadline;
 	} else {
