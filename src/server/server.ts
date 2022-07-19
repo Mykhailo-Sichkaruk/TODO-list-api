@@ -22,13 +22,13 @@ export class Server {
 	}
 
 	public start() {
+		this.setRequestlogger();
 		this.setConfig();
 		this.setRoutes();
-		this.setRequestlogger();
+		this.setSwagger();
 
 		this.app.listen(process.env.PORT, () => {
 			console.log(`Server running on localhost:${process.env.PORT}`);
-			this.setSwagger();
 		});
 	}
 
