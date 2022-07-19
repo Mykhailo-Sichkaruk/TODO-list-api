@@ -63,9 +63,9 @@ export class Server {
 			definition: {
 				openapi: "3.0.0",
 				info: {
-					title: "Task API",
+					title: "TODO-list API",
 					version: "1.0.0",
-					description: "Task API",
+					description: "TODO-list tasks API",
 				},
 				servers: [
 					{
@@ -73,6 +73,19 @@ export class Server {
 						description: "Local server",
 					},
 				],
+				components: {
+					securitySchemes: {
+						bearerAuth: {
+							type: "http",
+							scheme: "bearer",
+							name: "Authorization",
+							description: "Bearer authentication",
+							bearerFormat: "JWT",
+							in: "header",
+						},
+					},
+					security: [{ bearerAuth: [] }],
+				},
 			},
 			apis: ["./src/server/routes/*.ts", "./src/server/server.ts"],
 		};
