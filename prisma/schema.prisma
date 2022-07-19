@@ -22,6 +22,7 @@ model List {
   id          String @id @default(cuid())
   title       String
   subscribers User[]
+  authorId    String
   items       Task[]
 }
 
