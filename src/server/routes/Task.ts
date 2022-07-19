@@ -7,19 +7,100 @@ const prisma = new PrismaClient();
 export const Task = Router();
 
 /**
- * @api {post} /task Create a new task
- * @apiName CreateTask
- * @apiGroup Task
- * @apiVersion 1.0.0
- * @apiDescription Create a new task
- * @apiHeader {String} Authorization Bearer + token
- * @apiHeaderExample {json} Header-Example: Bearer + eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNsNXBleWZjcDAwMDI1d3RhamFpYTFqY2MiLCJpYXQiOjE2NTgwNjgxMzIsImV4cCI6MTY1ODA3MTczMn0.5EPU0LzjBdK5gm3lp_f49C-yM5vu4eWHDALLXHCk7sg
- * @apiParam {String} title: Title of the task
- * @apiParam {String} body: Description of the task
- * @apiParam {String || number || DateTime} deadline: Deadline of the task
- * @apiParam {String} listId: ID of the list the task belongs to
- * @apiParam {String} status: Status of the task [ACTIVE, DONE, CLOSED, IN_PROGRESS]
- * @apeResposnse {json} Request-Example: {cuccess: true/false, message: task}
+ * @swagger
+ * components:
+ *   schemas:
+ *     # Create
+ *     TaskCreateRequest: # Req
+ *       type: object
+ *       required:
+ *         - title
+ *         - body
+ *         - listId
+ *       properties:
+ *         title:
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 255
+ *           example: "Task 1"
+ *         body:
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 500
+ *           example: "Task 1 body"
+ *         listId:
+ *           type: string
+ *           example: "cl5pf2wpf000004tal8ai4dus"
+ *         deadline:
+ *           type: Date
+ *           example: "2020-01-01T00:00:00.000Z"
+ *         status:
+ *           type: string
+ *           enum:
+ *             - ACTIVE
+ *             - IN_PROGRESS
+ *             - DONE
+ *             - CLOSED
+ *           example: "ACTIVE"
+ *     # Delete
+ *     TaskDeleteRequest: # Req
+ *       type: object
+ *       required:
+ *         - id
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: "cl5pf2wpf000004tal8ai4dus"
+ *     # Update
+ *     TaskUpdateRequest: # Req
+ *       type: object
+ *       required:
+ *         - id
+ *         - status
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: "cl5pf2wpf000004tal8ai4dus"
+ *         status:
+ *           type: string
+ *           enum:
+ *             - ACTIVE
+ *             - IN_PROGRESS
+ *             - DONE
+ *             - CLOSED
+ */
+
+/**
+ * @swagger
+ * /task:
+ *   post:
+ *     tags:
+ *       - Task
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Create new task
+ *     description: Create new task
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/TaskCreateRequest'
+ *     responses:
+ *       200:
+ *         description: Task created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Task'
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: List not found
+ *       406:
+ *         description: You are not member of this list
  */
 Task.post("/",
 	body("title").isString().isLength({ min: 1 }).withMessage("Title must be at least 1 characters long"),
@@ -51,7 +132,7 @@ Task.post("/",
 		// Check if user is member of list
 		const user =  await prisma.list.findFirst({ where: { id: listId, subscribers: { some: { id: authorId } } } });
 		if (!user) {
-			res.status(404).json({ success: "false", message: `You are not member of ${list.title}. \nPlease ask author of this Todo-list to add you` });
+			res.status(406).json({ success: "false", message: `You are not member of ${list.title}. \nPlease ask author of this Todo-list to add you` });
 			return;
 		}
 		// Create task
@@ -61,15 +142,33 @@ Task.post("/",
 	});
 
 /**
- * @api {delete} /task/ Delete a task
- * @apiName DeleteTask
- * @apiGroup Task
- * @apiVersion 1.0.0
- * @apiDescription Delete a task
- * @apiHeader {String} Authorization Bearer + token
- * @apiHeaderExample {json} Header-Example: Bearer + eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNsNXBleWZjcDAwMDI1d3RhamFpYTFqY2MiLCJpYXQiOjE2NTgwNjgxMzIsImV4cCI6MTY1ODA3MTczMn0.5EPU0LzjBdK5gm3lp_f49C-yM5vu4eWHDALLXHCk7sg
- * @apiParam {String} taskId: ID of the task
- */
+ * @swagger
+ * /task:
+ *   delete:
+ *     tags:
+ *       - Task
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Delete task
+ *     description: Delete task
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/TaskDeleteRequest'
+ *     responses:
+ *       200:
+ *         description: Task deleted
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Task not found
+ *       406:
+ *         description: You are not author of this task
+*/
 Task.delete("/",
 	body("id").notEmpty().withMessage("id of task must be provided"),
 	async (req: express.Request, res: express.Response) => {
@@ -102,9 +201,36 @@ Task.delete("/",
 		res.status(200).json({ success: "true", message: "Task deleted" });
 	});
 
+/**
+ * @swagger
+ * /task:
+ *   put:
+ *     tags:
+ *       - Task
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Update task
+ *     description: Update task
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/TaskUpdateRequest'
+ *     responses:
+ *       200: 
+ *         description: Task updated
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Task not found
+ *       406:
+ *         description: You are not author of this task 
+ */
 Task.put("/",
 	body("id").exists().withMessage("id of task must be provided"),
-	body("listId").exists().withMessage("listId of task must be provided"),
 	body("status").isIn(["ACTIVE", "DONE", "CLOSED", "IN_PROGRESS", undefined]).withMessage("Status must be in : [ACTIVE, DONE, CLOSED, IN_PROGRESS]"),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
@@ -119,7 +245,7 @@ Task.put("/",
 			res.status(401).json({ success: "false", message: "Unauthorized" });
 			return;
 		}
-		const { id, listId, status } = req.body;
+		const { id, status } = req.body;
 		// Check if task exists
 		const task = await prisma.task.findUnique({ where: { id } });
 		if (!task) {
@@ -127,7 +253,7 @@ Task.put("/",
 			return;
 		}
 		// Check if user is member of list
-		const user =  await prisma.list.findFirst({ where: { id: listId, subscribers: { some: { id: getTokenId(token) } } } });
+		const user =  await prisma.list.findFirst({ where: { id: task.listId, subscribers: { some: { id: getTokenId(token) } } } });
 		if (!user) {
 			res.status(404).json({ success: "false", message: `You are not member of ${task.id}. \nPlease ask author of this Todo-list to add you` });
 			return;
