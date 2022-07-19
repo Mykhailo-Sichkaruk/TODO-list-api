@@ -48,8 +48,9 @@ npm start
 - Clisk **Execute** ![register-execute](./docs/register-execute.png)
 - **Copy** token fron response header or body ![copy-token](./docs/register-copy-token.png)
 - Scroll up and click **Autorize** ![click-autorize](./docs/register-autorize.png)
-- **Paste token** ![paste-token](./docs/register-paste-token.png) and clisck **Autorize**
-`Great You added token to header`
+- **Paste token** ![paste-token](./docs/register-paste-token.png) and clisck **Autorize**  
+
+> Great You added token to header!
 
 ## API
 
