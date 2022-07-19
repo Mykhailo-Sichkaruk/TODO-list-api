@@ -29,6 +29,7 @@ export class Server {
 
 		this.app.listen(process.env.PORT, () => {
 			console.log(`Server running on localhost:${process.env.PORT}`);
+			console.log("Swagger docs available at http://localhost:4000/docs/");
 		});
 	}
 
