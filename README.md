@@ -30,9 +30,6 @@ npm install
 - Setup Postgres  
   - Open `.env` file in project root
   - Set `DATABASE_URL` to `postgres://_YOUR_POSTRGES_LOGIN_:_YOUR_POSTGRES_PASSWORD_@localhost:5432/mydb?schema=public`
-  - Open **SQL Shell (psql)** login and create database `mydb`
-  - Open `/prisma/migrations/20220717135217_init/migration.sql` in project root
-  - Copy sql commands and insert it in **SQL Shell (psql)**
 - Run server:  
 
 ```bash
