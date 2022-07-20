@@ -195,7 +195,8 @@ List.post("/",
 			res.status(401).json({ success: "false", message: "Unauthorized" });
 		// Create List
 		const { title } = req.body;
-		const list = await prisma.list.create({ data: { title, subscribers: { connect: { id: getTokenId(token) } } } });
+		const authorId = getTokenId(token);
+		const list = await prisma.list.create({ data: { title, authorId, subscribers: { connect: { id: authorId } } } });
 		res.status(200).json({ success: "true", message: list });
 	});
 
