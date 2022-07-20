@@ -3,6 +3,7 @@ import express, { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { body, validationResult } from "express-validator";
 import { AUTH } from "../../constants";
+import bcrypt from "bcrypt";
 
 export const Auth = Router();
 const prisma = new PrismaClient();
@@ -101,7 +102,7 @@ Auth.post("/register",
 		if (user)
 			return res.status(409).json({ success: "false", message: "User already exists" });
 		// Create user
-		const newUser = await prisma.user.create({ data: { login, password } });
+		const newUser = await prisma.user.create({ data: { login, password:  await bcrypt.hash(password, 10) } });
 		const token = jwt.sign({ id: newUser.id }, `${process.env.JWT_SECRET}`, { expiresIn: AUTH.TOKEN_VALIDATION_TIME });
 		res.status(200).header("Authorization", `Bearer ${token}`).json({
 			success: "true",
@@ -155,7 +156,7 @@ Auth.post("/login",
 		if (!user)
 			return res.status(404).json({ success: "false", message: "User not found" });
 		// Check if password is correct
-		if (user.password !== password)
+		if (!await bcrypt.compare(password, user.password))
 			return res.status(406).json({ success: "false", message: "Wrong password" });
 		// Login user and send token
 		const token = jwt.sign({ id: user.id }, `${process.env.JWT_SECRET}`, { expiresIn: AUTH.TOKEN_VALIDATION_TIME });
