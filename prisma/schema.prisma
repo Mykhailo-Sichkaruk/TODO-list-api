@@ -23,7 +23,7 @@ model List {
     title       String
     subscribers User[]
     authorId    String
-    task        Task[]
+    tasks       Task[]
 }
 
 model Task {

@@ -379,7 +379,7 @@ List.get("/:id", async (req: express.Request, res: express.Response) => {
 		return res.status(401).json({ success: "false", message: "Unauthorized" });
 	// Check if list exists
 	const { id } = req.params;
-	const list = await prisma.list.findUnique({ where: { id }, include: { items: true } });
+	const list = await prisma.list.findUnique({ where: { id }, include: { tasks: true } });
 	// Check if list exists
 	if (!list)
 		return res.status(404).json({ success: "false", message: "List not found" });
