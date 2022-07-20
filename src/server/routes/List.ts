@@ -343,7 +343,7 @@ List.get("/", async (req: express.Request, res: express.Response) => {
 	// Send all lists with tasks
 	const lists = await prisma.list.findMany({
 		where: { subscribers: { some: { id: getTokenId(token) } } },
-		include: { items: true },
+		include: { tasks: true },
 	});
 	// Check if user has any lists
 	if (!lists)

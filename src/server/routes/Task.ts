@@ -131,7 +131,7 @@ Task.post("/",
 			return res.status(406).json({ success: "false", message: `You are not member of ${list.title}. \nPlease ask author of this Todo-list to add you` });
 		// Create task
 		const task = await prisma.task.create({ data: { title, body, listId, deadline, status, authorId } });
-		await prisma.list.update({ where: { id: listId }, data: { items: { connect: { id: task.id } } } });
+		await prisma.list.update({ where: { id: listId }, data: { tasks: { connect: { id: task.id } } } });
 		res.status(200).json({ success: "true", message: task });
 	});
 
