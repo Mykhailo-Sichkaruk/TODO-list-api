@@ -29,6 +29,11 @@ const ERROR = deepFreeze({
 	},
 });
 
+const MSG = deepFreeze({
+	exists: "Must exist and be not falsy",
+	isString: "Must be string",
+});
+
 const REQ = Object.freeze({ // Prototype for request objects
 	TITLE: {
 		min: 3,
@@ -42,6 +47,8 @@ const REQ = Object.freeze({ // Prototype for request objects
 	},
 	ID: {
 		message: "Id must be provided",
+		exists: "Id must be provided",
+		isString: "Id must be a string",
 	},
 });
 
@@ -71,4 +78,4 @@ const TASK = task();
 const LIST = deepFreeze(Object.create(REQ));
 
 
-export { AUTH, LIST, TASK, ERROR };
+export { AUTH, LIST, TASK, ERROR, MSG };
