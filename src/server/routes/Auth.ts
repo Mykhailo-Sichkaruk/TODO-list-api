@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import express, { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { body, validationResult } from "express-validator";
-import { AUTH, ERROR } from "../../constants";
+import { AUTH, ERROR, MSG } from "../../constants";
 import bcrypt from "bcrypt";
 
 export const Auth = Router();
@@ -89,8 +89,8 @@ const prisma = new PrismaClient();
  *           $ref: '#/components/responses/JSONParseError'
 */
 Auth.post("/register",
-	body("login").exists().isLength(AUTH.LOGIN).withMessage(AUTH.LOGIN.message),
-	body("password").exists().isLength(AUTH.PASSWORD).withMessage(AUTH.PASSWORD.message),
+	body("login").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString).isLength(AUTH.LOGIN).withMessage(AUTH.LOGIN.message),
+	body("password").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString).isLength(AUTH.PASSWORD).withMessage(AUTH.PASSWORD.message),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
@@ -144,8 +144,8 @@ Auth.post("/register",
  *           $ref: '#/components/responses/JSONParseError'
 */
 Auth.post("/login",
-	body("login").exists().isLength(AUTH.LOGIN).withMessage(AUTH.LOGIN.message),
-	body("password").exists().isLength(AUTH.PASSWORD).withMessage(AUTH.PASSWORD.message),
+	body("login").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString).isLength(AUTH.LOGIN).withMessage(AUTH.LOGIN.message),
+	body("password").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString).isLength(AUTH.PASSWORD).withMessage(AUTH.PASSWORD.message),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);

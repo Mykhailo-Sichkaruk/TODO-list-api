@@ -2,7 +2,7 @@ import express, { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { getTokenId, verifyToken } from "./Auth";
 import { body, Meta, validationResult } from "express-validator";
-import { ERROR, TASK } from "../../constants";
+import { ERROR, MSG, TASK } from "../../constants";
 
 const prisma = new PrismaClient();
 export const Task = Router();
@@ -106,10 +106,10 @@ export const Task = Router();
  *         description: JSON parse error
  */
 Task.post("/",
-	body("title").isString().isLength(TASK.TITLE).withMessage(TASK.TITLE.message),
-	body("body").isString().isLength(TASK.BODY).withMessage(TASK.BODY.message),
-	body("listId").notEmpty().withMessage("ListId must be provided as string"),
-	body("status").isIn(TASK.STATUS.values).withMessage(TASK.STATUS.message),
+	body("listId").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString),
+	body("title").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString).isLength(TASK.TITLE).withMessage(TASK.TITLE.message),
+	body("body").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString).isLength(TASK.BODY).withMessage(TASK.BODY.message),
+	body("status").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString).isIn(TASK.STATUS.values).withMessage(TASK.STATUS.message),
 	body("deadline").customSanitizer(checkDeadline).exists().withMessage("Deadline must be a valid date or empty"),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
@@ -167,7 +167,7 @@ Task.post("/",
  *         description: JSON parse error
 */
 Task.delete("/",
-	body("id").notEmpty().withMessage(TASK.ID.message),
+	body("id").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
@@ -221,8 +221,8 @@ Task.delete("/",
  *         $ref: '#/components/responses/JSONParseError'
  */
 Task.put("/",
-	body("id").exists().withMessage("id of task must be provided"),
-	body("status").isIn(TASK.STATUS.values).withMessage(TASK.STATUS.message),
+	body("id").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString),
+	body("status").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString).isIn(TASK.STATUS.values).withMessage(TASK.STATUS.message),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);

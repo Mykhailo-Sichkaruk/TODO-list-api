@@ -2,7 +2,7 @@ import express, { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { getTokenId, verifyToken } from "./Auth";
 import { body, validationResult } from "express-validator";
-import { ERROR, LIST } from "../../constants";
+import { ERROR, LIST, MSG } from "../../constants";
 
 const prisma = new PrismaClient();
 
@@ -238,7 +238,7 @@ export const List = Router();
  *         $ref: '#/components/responses/JSONParseError'
 */
 List.post("/",
-	body("title").exists().isLength(LIST.TITLE).withMessage(LIST.TITLE.message),
+	body("title").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString).isLength(LIST.TITLE).withMessage(LIST.TITLE.message),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
@@ -288,7 +288,7 @@ List.post("/",
  *         $ref: '#/components/responses/JSONParseError'
  */
 List.delete("/",
-	body("id").exists().withMessage(LIST.ID.message),
+	body("id").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString),
 	async (req, res) => {
 		// Check if input is valid
 		const errors = validationResult(req);
@@ -347,8 +347,8 @@ List.delete("/",
  *         $ref: '#/components/responses/JSONParseError'
  */
 List.put("/",
-	body("id").exists().isString().withMessage(LIST.ID.message),
-	body("title").exists().isString().isLength(LIST.TITLE).withMessage(LIST.TITLE.message),
+	body("id").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString),
+	body("title").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString).isLength(LIST.TITLE).withMessage(LIST.TITLE.message),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
@@ -486,8 +486,8 @@ List.get("/:id", async (req: express.Request, res: express.Response) => {
  *         description: JSON parse error
  */
 List.post("/subscribe",
-	body("userId").exists({ checkFalsy: true }).isString().withMessage(LIST.ID.message),
-	body("listId").exists({ checkFalsy: true }).isString().withMessage(LIST.ID.message),
+	body("userId").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString),
+	body("listId").exists({ checkFalsy: true }).withMessage(MSG.exists).isString().withMessage(MSG.isString),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
