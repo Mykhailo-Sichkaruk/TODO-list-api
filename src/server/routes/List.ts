@@ -192,7 +192,7 @@ List.post("/",
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			res.status(401).json({ success: "false", message: "Unauthorized" });
+			return res.status(401).json({ success: "false", message: "Unauthorized" });
 		// Create List
 		const { title } = req.body;
 		const authorId = getTokenId(token);
