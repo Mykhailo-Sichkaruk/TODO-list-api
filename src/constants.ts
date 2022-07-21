@@ -7,6 +7,28 @@ const deepFreeze = (obj: any) => {
 	return Object.freeze(obj);
 };
 
+const ERROR = deepFreeze({
+	400(errors: Array<any>) {
+		return {
+			success: false,
+			message: "Invalid input",
+			errors,
+		};
+	},
+	401: {
+		success: false,
+		message: "Unauthorized. Please register or login and add response token to header.",
+	},
+	403: {
+		message: "Forbidden",
+		status: 403,
+	},
+	444: {
+		message: "JSON parse error",
+		status: 444,
+	},
+});
+
 const REQ = Object.freeze({ // Prototype for request objects
 	TITLE: {
 		min: 3,
@@ -43,29 +65,7 @@ const task = () => {
 	return deepFreeze(taskProp);
 };
 
-const ERROR = deepFreeze({
-	400(errors: Array<any>) {
-		return {
-			success: false,
-			message: "Invalid input",
-			errors,
-		};
-	},
-	401: {
-		success: false,
-		message: "Unauthorized. Please register or login and add response token to header.",
-	},
-	403: {
-		message: "Forbidden",
-		status: 403,
-	},
-	444: {
-		message: "JSON parse error",
-		status: 444,
-	},
-});
-
-const AUTH =  auth();
+const AUTH = auth();
 
 const TASK = task();
 const LIST = deepFreeze(Object.create(REQ));

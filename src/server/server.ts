@@ -1,16 +1,16 @@
+import errorHandler from "./middleware/error-handler";
 import { PrismaClient } from "@prisma/client";
+import swaggerUi from "swagger-ui-express";
 import consola, { Consola } from "consola";
 import * as bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
+import swaggerJSDoc from "swagger-jsdoc";
 import { Auth } from "./routes/Auth";
 import { List } from "./routes/List";
 import { Task } from "./routes/Task";
+import express from "express";
 import * as dotenv from "dotenv";
-import express, {  } from "express";
 import cors from "cors";
-import errorHandler from "./middleware/error-handler";
-import swaggerJSDoc from "swagger-jsdoc";
-import swaggerUi from "swagger-ui-express";
 
 export class Server {
 	public app: express.Application;
@@ -29,7 +29,7 @@ export class Server {
 
 		this.app.listen(process.env.PORT, () => {
 			console.log(`Server running on localhost:${process.env.PORT}`);
-			console.log("Swagger docs available at http://localhost:4000/docs/");
+			console.log(`Swagger docs available at http://localhost:${process.env.PORT}/docs/`);
 		});
 	}
 
@@ -70,7 +70,7 @@ export class Server {
 				},
 				servers: [
 					{
-						url: "http://localhost:4000",
+						url: `http://localhost:${process.env.PORT}`,
 						description: "Local server",
 					},
 				],

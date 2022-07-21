@@ -1,6 +1,6 @@
 import express, { Router } from "express";
 import { PrismaClient } from "@prisma/client";
-import { getTokenId, verifyToken  } from "./Auth";
+import { getTokenId, verifyToken } from "./Auth";
 import { body, Meta, validationResult } from "express-validator";
 import { ERROR, TASK } from "../../constants";
 
@@ -127,7 +127,7 @@ Task.post("/",
 		if (!list)
 			return res.status(404).json({ success: false, message: "List not found" });
 		// Check if user is member of list
-		const user =  await prisma.list.findFirst({ where: { id: listId, subscribers: { some: { id: authorId } } } });
+		const user = await prisma.list.findFirst({ where: { id: listId, subscribers: { some: { id: authorId } } } });
 		if (!user)
 			return res.status(406).json({ success: false, message: `You are not member of ${list.title}. \nPlease ask author of this Todo-list to add you` });
 		// Create task
@@ -238,7 +238,7 @@ Task.put("/",
 		if (!task)
 			return res.status(404).json({ success: false, message: "Task not found" });
 		// Check if user is member of list
-		const user =  await prisma.list.findFirst({ where: { id: task.listId, subscribers: { some: { id: getTokenId(token) } } } });
+		const user = await prisma.list.findFirst({ where: { id: task.listId, subscribers: { some: { id: getTokenId(token) } } } });
 		if (!user)
 			return res.status(403).json({ success: false, message: `You are not member of ${task.id}. \nPlease ask author of this Todo-list to add you` });
 		// Update task
@@ -248,14 +248,15 @@ Task.put("/",
 
 function checkDeadline(value: string | number | Date, { req }: Meta) {
 	if (!value) {
-		return new Date(Date.now() + (1000 * 60 * 60 * 24)); // 1 day from now
+		const day = 1000 * 60 * 60 * 24; // 1000 ms * 60 s * 60 min * 24 h
+		return new Date(Date.now() + day); // 1 day from now
 	} else if (value instanceof Date) {
 		return req.body.deadline;
-	} else {
-		const date = new Date(value);
-		if (date.getTime() > Date.now()) {
-			return date;
-		}
 	}
+	const date = new Date(value);
+	if (date.getTime() > Date.now()) {
+		return date;
+	}
+
 	return undefined;
 }
