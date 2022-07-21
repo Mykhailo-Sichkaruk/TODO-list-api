@@ -53,7 +53,7 @@ const prisma = new PrismaClient();
  *           properties:
  *             id:
  *               type: string
- *               expample: "cl5pf2wpf000004tal8ai4dus"
+ *               example: "cl5pf2wpf000004tal8ai4dus"
  *             login:
  *               type: string
  *               example: "admin"
@@ -82,11 +82,11 @@ const prisma = new PrismaClient();
  *               schema:
  *                 $ref: '#/components/schemas/AuthResponse'
  *         400:
- *           description: Incorrect input
+ *           $ref: '#/components/responses/InvalidInput'
  *         409: 
  *           description: User already exists
  *         444:
- *           description: JSON parse error
+ *           $ref: '#/components/responses/JSONParseError'
 */
 Auth.post("/register",
 	body("login").exists().isLength(AUTH.LOGIN).withMessage("Login must be min 3, max 255 characters long"),
@@ -95,17 +95,17 @@ Auth.post("/register",
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: "false", messaga: "Incorrect input", errors: errors.array() });
+			return res.status(400).json({ success: false, messaga: "Incorrect input", errors: errors.array() });
 		// Check if user is already registered
 		const { login, password } = req.body;
 		const user = await prisma.user.findUnique({ where: { login } });
 		if (user)
-			return res.status(409).json({ success: "false", message: "User already exists" });
+			return res.status(409).json({ success: false, message: "User already exists" });
 		// Create user
 		const newUser = await prisma.user.create({ data: { login, password:  await bcrypt.hash(password, 10) } });
 		const token = jwt.sign({ id: newUser.id }, `${process.env.JWT_SECRET}`, { expiresIn: AUTH.TOKEN_VALIDATION_TIME });
 		res.status(200).header("Authorization", `Bearer ${token}`).json({
-			success: "true",
+			success: true,
 			message: `You've signed up, your token is valid for ${AUTH.TOKEN_VALIDATION_TIME}`,
 			token,
 			user: { login: newUser.login, id: newUser.id },
@@ -136,11 +136,13 @@ Auth.post("/register",
  *               schema:
  *                 $ref: '#/components/schemas/AuthResponse'
  *         400:
- *           description: Incorrect input
+ *           $ref: '#/components/responses/InvalidInput'
  *         404: 
  *           description: User not found
  *         406:
  *           description: Wrong password
+ *         444:
+ *           $ref: '#/components/responses/JSONParseError'
 */
 Auth.post("/login",
 	body("login").exists().isLength(AUTH.LOGIN).withMessage("Login must be at least 3 characters long"),
@@ -149,19 +151,19 @@ Auth.post("/login",
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: "false", messaga: "Invalid request", errors: errors.array() });
+			return res.status(400).json({ success: false, messaga: "Invalid request", errors: errors.array() });
 		// Check if user is registered
 		const { login, password } = req.body;
 		const user = await prisma.user.findUnique({ where: { login } });
 		if (!user)
-			return res.status(404).json({ success: "false", message: "User not found" });
+			return res.status(404).json({ success: false, message: "User not found" });
 		// Check if password is correct
 		if (!await bcrypt.compare(password, user.password))
-			return res.status(406).json({ success: "false", message: "Wrong password" });
+			return res.status(406).json({ success: false, message: "Wrong password" });
 		// Login user and send token
 		const token = jwt.sign({ id: user.id }, `${process.env.JWT_SECRET}`, { expiresIn: AUTH.TOKEN_VALIDATION_TIME });
 		res.status(200).header("Authorization", `Bearer ${token}`).json({
-			success: "true",
+			success: true,
 			message: `You've signed in, your token is valid for ${AUTH.TOKEN_VALIDATION_TIME}`,
 			token,
 			user: { login: user.login, id: user.id },

@@ -96,7 +96,7 @@ export const Task = Router();
  *       400:
  *         description: Invalid input
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
  *       404:
  *         description: List not found
  *       406:
@@ -114,25 +114,25 @@ Task.post("/",
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: "false", message: "Invalid input", errors: errors.array() });
+			return res.status(400).json({ success: false, message: "Invalid input", errors: errors.array() });
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			return res.status(401).json({ success: "false", message: "Unauthorized" });
+			return res.status(401).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
 		const { title, body, listId, status, deadline } = req.body;
 		const authorId = getTokenId(token);
 		// Check if list exists
 		const list = await prisma.list.findUnique({ where: { id: listId } });
 		if (!list)
-			return res.status(404).json({ success: "false", message: "List not found" });
+			return res.status(404).json({ success: false, message: "List not found" });
 		// Check if user is member of list
 		const user =  await prisma.list.findFirst({ where: { id: listId, subscribers: { some: { id: authorId } } } });
 		if (!user)
-			return res.status(406).json({ success: "false", message: `You are not member of ${list.title}. \nPlease ask author of this Todo-list to add you` });
+			return res.status(406).json({ success: false, message: `You are not member of ${list.title}. \nPlease ask author of this Todo-list to add you` });
 		// Create task
 		const task = await prisma.task.create({ data: { title, body, listId, deadline, status, authorId } });
 		await prisma.list.update({ where: { id: listId }, data: { tasks: { connect: { id: task.id } } } });
-		res.status(200).json({ success: "true", message: task });
+		res.status(200).json({ success: true, message: task });
 	});
 
 /**
@@ -157,7 +157,7 @@ Task.post("/",
  *       400:
  *         description: Invalid input
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
  *       404:
  *         description: Task not found
  *       406:
@@ -171,22 +171,22 @@ Task.delete("/",
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: "false", message: "Invalid input", errors: errors.array() });
+			return res.status(400).json({ success: false, message: "Invalid input", errors: errors.array() });
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			return res.status(401).json({ success: "false", message: "Unauthorized" });
+			return res.status(401).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
 		const { id } = req.body;
 		// Check if task exists
 		const task = await prisma.task.findUnique({ where: { id } });
 		if (!task)
-			return res.status(404).json({ success: "false", message: "Task not found" });
+			return res.status(404).json({ success: false, message: "Task not found" });
 		// Check if user is author of task
 		if (task.authorId !== getTokenId(token))
-			return res.status(403).json({ success: "false", message: "You are not author of this task" });
+			return res.status(403).json({ success: false, message: "You are not author of this task" });
 		// Delete task
 		await prisma.task.delete({ where: { id } });
-		res.status(200).json({ success: "true", message: "Task deleted" });
+		res.status(200).json({ success: true, message: "Task deleted" });
 	});
 
 /**
@@ -209,15 +209,15 @@ Task.delete("/",
  *       200: 
  *         description: Task updated
  *       400:
- *         description: Invalid input
+ *         $ref: '#/components/responses/InvalidInput'
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
  *       404:
  *         description: Task not found
  *       406:
  *         description: You are not author of this task
  *       444:
- *         description: JSON parse error
+ *         $ref: '#/components/responses/JSONParseError'
  */
 Task.put("/",
 	body("id").exists().withMessage("id of task must be provided"),
@@ -226,23 +226,23 @@ Task.put("/",
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: "false", message: "Invalid input", errors: errors.array() });
+			return res.status(400).json({ success: false, message: "Invalid input", errors: errors.array() });
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			return res.status(401).json({ success: "false", message: "Unauthorized" });
+			return res.status(401).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
 		const { id, status } = req.body;
 		// Check if task exists
 		const task = await prisma.task.findUnique({ where: { id } });
 		if (!task)
-			return res.status(404).json({ success: "false", message: "Task not found" });
+			return res.status(404).json({ success: false, message: "Task not found" });
 		// Check if user is member of list
 		const user =  await prisma.list.findFirst({ where: { id: task.listId, subscribers: { some: { id: getTokenId(token) } } } });
 		if (!user)
-			return res.status(404).json({ success: "false", message: `You are not member of ${task.id}. \nPlease ask author of this Todo-list to add you` });
+			return res.status(404).json({ success: false, message: `You are not member of ${task.id}. \nPlease ask author of this Todo-list to add you` });
 		// Update task
 		await prisma.task.update({ where: { id }, data: { status } });
-		res.status(200).json({ success: "true", message: "Task updated" });
+		res.status(200).json({ success: true, message: "Task updated" });
 	});
 
 function checkDeadline(value: string | number | Date, { req }: Meta) {

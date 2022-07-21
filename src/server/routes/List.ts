@@ -35,6 +35,19 @@ export const List = Router();
  *         status:
  *           type: string
  *           example: "ACTIVE"
+ *     List:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: "cl5sa8bo30002m0ta5a59y1zc"
+ *         title:
+ *           type: string
+ *           example: "List"
+ *         tasks:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Task'
  *     # Create 
  *     ListCreateRequest: # Req
  *       type: object
@@ -109,18 +122,7 @@ export const List = Router();
  *     ListGetResponse: # Res
  *       type: array
  *       items:
- *         type: object
- *         properties:
- *           id:
- *             type: string
- *             example: "cl5sa8bo30002m0ta5a59y1zc"
- *           title:
- *             type: string
- *             example: "List"
- *           tasks:
- *             type: array
- *             items:
- *               $ref: '#/components/schemas/Task'
+ *         $ref: '#/components/schemas/List'
  *     # Subscribe
  *     ListSubscribeRequest:
  *       type: object
@@ -135,7 +137,28 @@ export const List = Router();
  *           type: string
  *           example: "cl5sa8bo30002m0ta5a59y1zc"
  *     # Errors
- *     ErrorInvalidInput:
+ *     Error444JSONparse:  
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: false
+ *         message:
+ *           type: string
+ *           example: "JSON Parse Error"
+ *         error:
+ *           type: string
+ *           example: "Unexpected token : in JSON at position 26"
+ *     Error401Unauthorized:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: false
+ *         message:
+ *           type: string
+ *           example: "Unauthorized. Please register or login and add response token to header."
+ *     Error404InvalidInput:
  *       type: object
  *       properties:
  *         success:
@@ -146,6 +169,41 @@ export const List = Router();
  *           example: "Invalid input"
  *         errors:
  *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               example:
+ *                 type: string
+ *                 example: "N"
+ *               msg: 
+ *                 type: string
+ *                 example: "Title must be at least 3 characters"
+ *               param:
+ *                 type: string
+ *                 expample: "title"
+ *               location:
+ *                 type: string
+ *                 example: "body"
+ *   responses:
+ *     Unauthorized:
+ *       description: Unauthorized
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Error401Unauthorized'
+ *     InvalidInput:
+ *       description: Invalid input
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Error404InvalidInput'
+ *     JSONParseError:
+ *       description: JSON Parse Error
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Error444JSONparse'
+ *        
  */
 
 /**
@@ -172,15 +230,11 @@ export const List = Router();
  *             schema:
  *               $ref: '#/components/schemas/ListCreateResponse'
  *       400:
- *         description: Invalid input
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorInvalidInput'
+ *         $ref: '#/components/responses/InvalidInput'
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
  *       444:
- *         description: JSON parse error
+ *         $ref: '#/components/responses/JSONParseError'
 */
 List.post("/",
 	body("title").exists().isLength({ min: 1 }).withMessage("Title must be at least 1 characters long"),
@@ -188,16 +242,16 @@ List.post("/",
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: "false", message: "Invalid input", errors: errors.array() });
+			return res.status(400).json({ success: false, message: "Invalid input", errors: errors.array() });
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			return res.status(401).json({ success: "false", message: "Unauthorized" });
+			return res.status(401).json({ success: false, message: "Unauthorized" });
 		// Create List
 		const { title } = req.body;
 		const authorId = getTokenId(token);
 		const list = await prisma.list.create({ data: { title, authorId, subscribers: { connect: { id: authorId } } } });
-		res.status(200).json({ success: "true", message: list });
+		res.status(200).json({ success: true, message: list });
 	});
 
 /**
@@ -224,11 +278,13 @@ List.post("/",
  *             schema:
  *               $ref: '#/components/schemas/ListDeleteResponse'
  *       400:
- *         description: Invalid input
+ *         $ref: '#/components/responses/InvalidInput'
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
  *       404:
  *         description: List not found
+ *       444:
+ *         $ref: '#/components/responses/JSONParseError'
  */
 List.delete("/",
 	body("id").exists().isLength({ min: 1 }).withMessage("Id must be at least 1 characters long"),
@@ -236,19 +292,19 @@ List.delete("/",
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: "false", message: "Invalid input", errors: errors.array() });
+			return res.status(400).json({ success: false, message: "Invalid input", errors: errors.array() });
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			return res.status(401).json({ success: "false", message: "Unauthorized" });
+			return res.status(401).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
 		// Check if list exists
 		const { id } = req.body;
 		const list = await prisma.list.findUnique({ where: { id } });
 		if (!list)
-			return res.status(404).json({ success: "false", message: "List does not exist" });
+			return res.status(404).json({ success: false, message: "List does not exist" });
 		// Delete list
 		await prisma.list.delete({ where: { id } });
-		res.status(200).json({ success: "true", message: list });
+		res.status(200).json({ success: true, message: list });
 	});
 
 /**
@@ -275,15 +331,15 @@ List.delete("/",
  *             schema:
  *               $ref: '#/components/schemas/ListUpdateRequest'
  *       400:
- *         description: Invalid input
+ *         $ref: '#/components/responses/JSONParseError'
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
  *       404:
  *         description: List does not exist
  *       406:
  *         description: List does not belong to this user
  *       444:
- *         description: JSON parse error
+ *         $ref: '#/components/responses/JSONParseError'
  */
 List.put("/",
 	body("id").exists().isString().isLength({ min: 1 }).withMessage("Id must be at least 1 characters long"),
@@ -292,23 +348,23 @@ List.put("/",
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: "false", messaga: "Incorrect input", errors: errors.array() });
+			return res.status(400).json({ success: false, messaga: "Incorrect input", errors: errors.array() });
 		// CHeck if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			return res.status(400).json({ success: "false", message: "Unauthorized" });
+			return res.status(400).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
 		// Check if list exists
 		const { id, title } = req.body;
 		let list = await prisma.list.findUnique({ where: { id } });
 		if (!list)
-			return res.status(404).json({ success: "false", message: "List not found" });
+			return res.status(404).json({ success: false, message: "List not found" });
 		// Check if request sender is a member of the list
 		const author =  await prisma.list.findFirst({ where: { id, subscribers: { some: { id: getTokenId(token) } } } });
 		if (!author)
-			return res.status(406).json({ success: "false", message: `You are not member of ${list.title}(${list.id}). \nPlease ask author of this Todo-list to add you` });
+			return res.status(406).json({ success: false, message: `You are not member of ${list.title}(${list.id}). \nPlease ask author of this Todo-list to add you` });
 		// Update list title
 		list = await prisma.list.update({ where: { id }, data: { title } });
-		res.status(200).json({ success: "true", message: list });
+		res.status(200).json({ success: true, message: list });
 	});
 
 /**
@@ -329,17 +385,17 @@ List.put("/",
  *             schema:
  *               $ref: '#/components/schemas/ListGetResponse'
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
  *       404:
  *         description: List does not exist 
  *       444:
- *         description: JSON parse error           
- */
+ *         $ref: '#/components/responses/JSONParseError' 
+*/
 List.get("/", async (req: express.Request, res: express.Response) => {
 	// Check if user is authorized
 	const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 	if (!verifyToken(token))
-		return res.status(401).json({ success: "false", message: "Unauthorized" });
+		return res.status(401).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
 	// Send all lists with tasks
 	const lists = await prisma.list.findMany({
 		where: { subscribers: { some: { id: getTokenId(token) } } },
@@ -347,11 +403,10 @@ List.get("/", async (req: express.Request, res: express.Response) => {
 	});
 	// Check if user has any lists
 	if (!lists)
-		return res.status(404).json({ success: "false", message: "No lists found" });
+		return res.status(404).json({ success: false, message: "No lists found" });
 	// Send lists
-	res.status(200).json({ success: "true", message: lists });
+	res.status(200).json({ success: true, message: lists });
 });
-
 
 /**
  * @swagger
@@ -370,21 +425,29 @@ List.get("/", async (req: express.Request, res: express.Response) => {
  *         required: true
  *     responses:
  *       200:
- *         description: List returned
+ *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/List'
+ *       404:
+ *         description: List does not exist. Please check list`s id
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
  */
 List.get("/:id", async (req: express.Request, res: express.Response) => {
 	// Check if user is authorized
 	const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 	if (!verifyToken(token))
-		return res.status(401).json({ success: "false", message: "Unauthorized" });
+		return res.status(401).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
 	// Check if list exists
 	const { id } = req.params;
 	const list = await prisma.list.findUnique({ where: { id }, include: { tasks: true } });
 	// Check if list exists
 	if (!list)
-		return res.status(404).json({ success: "false", message: "List not found" });
+		return res.status(404).json({ success: false, message: "List not found" });
 	// Send list 
-	res.status(200).json({ success: "true", message: list });
+	res.status(200).json({ success: true, message: list });
 });
 
 /**
@@ -409,7 +472,7 @@ List.get("/:id", async (req: express.Request, res: express.Response) => {
  *       400:
  *         description: Invalid input
  *       401:
- *         description: Unauthorized
+ *         $ref: '#/components/responses/Unauthorized'
  *       404:
  *         description: List does not exist
  *       406:
@@ -424,26 +487,26 @@ List.post("/subscribe",
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: "false", messaga: "Incorrect input", errors: errors.array() });
+			return res.status(400).json({ success: false, messaga: "Incorrect input", errors: errors.array() });
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			return res.status(401).json({ success: "false", message: "Unauthorized" });
+			return res.status(401).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
 		// Check if list exists
 		const { listId, userId } = req.body;
 		const listSubscribe = await prisma.list.findUnique({ where: { id: listId } });
 		if (!listSubscribe)
-			return res.status(400).json({ success: "false", message: "List not found" });
+			return res.status(400).json({ success: false, message: "List not found" });
 		// Check if request sender is a member of the list
 		const author =  await prisma.list.findFirst({ where: { id: listId, subscribers: { some: { id: getTokenId(token) } } } });
 		if (!author)
-			return res.status(400).json({ success: "false", message: `You are not member of ${listSubscribe.title}. \nPlease ask author of this Todo-list to add you` });
+			return res.status(400).json({ success: false, message: `You are not member of ${listSubscribe.title}. \nPlease ask author of this Todo-list to add you` });
 		// Check if new member exists
 		const user = await prisma.user.findUnique({ where: { id: userId } });
 		if (!user)
-			return res.status(400).json({ success: "false", message: "User not found" });
+			return res.status(400).json({ success: false, message: "User not found" });
 		// Add new member to list
 		const list = await prisma.list.update({ where: { id: listId }, data: { subscribers: { connect: { id: userId } } } });
-		res.status(200).json({ success: "true", message: list });
+		res.status(200).json({ success: true, message: list });
 	}
 );
