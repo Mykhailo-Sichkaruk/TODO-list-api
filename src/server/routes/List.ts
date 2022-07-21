@@ -2,6 +2,7 @@ import express, { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { getTokenId, verifyToken } from "./Auth";
 import { body, validationResult } from "express-validator";
+import { ERROR, LIST } from "../../constants";
 
 const prisma = new PrismaClient();
 
@@ -237,16 +238,16 @@ export const List = Router();
  *         $ref: '#/components/responses/JSONParseError'
 */
 List.post("/",
-	body("title").exists().isLength({ min: 1 }).withMessage("Title must be at least 1 characters long"),
+	body("title").exists().isLength(LIST.TITLE).withMessage(LIST.TITLE.message),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: false, message: "Invalid input", errors: errors.array() });
+			return res.status(400).json(ERROR[ 400 ](errors.array()));
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			return res.status(401).json({ success: false, message: "Unauthorized" });
+			return res.status(401).json(ERROR[ 401 ]);
 		// Create List
 		const { title } = req.body;
 		const authorId = getTokenId(token);
@@ -287,21 +288,21 @@ List.post("/",
  *         $ref: '#/components/responses/JSONParseError'
  */
 List.delete("/",
-	body("id").exists().isLength({ min: 1 }).withMessage("Id must be at least 1 characters long"),
+	body("id").exists().withMessage(LIST.ID.message),
 	async (req, res) => {
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: false, message: "Invalid input", errors: errors.array() });
+			return res.status(400).json(ERROR[ 400 ](errors.array()));
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			return res.status(401).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
+			return res.status(401).json(ERROR[ 401 ]);
 		// Check if list exists
 		const { id } = req.body;
 		const list = await prisma.list.findUnique({ where: { id } });
 		if (!list)
-			return res.status(404).json({ success: false, message: "List does not exist" });
+			return res.status(404).json({ success: false, message: "List not found" });
 		// Delete list
 		await prisma.list.delete({ where: { id } });
 		res.status(200).json({ success: true, message: list });
@@ -342,17 +343,17 @@ List.delete("/",
  *         $ref: '#/components/responses/JSONParseError'
  */
 List.put("/",
-	body("id").exists().isString().isLength({ min: 1 }).withMessage("Id must be at least 1 characters long"),
-	body("title").exists().isString().isLength({ min: 1 }).withMessage("Name must be at least 1 characters long"),
+	body("id").exists().isString().withMessage(LIST.ID.message),
+	body("title").exists().isString().isLength(LIST.TITLE).withMessage(LIST.TITLE.message),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: false, messaga: "Incorrect input", errors: errors.array() });
+			return res.status(400).json(ERROR[ 400 ](errors.array()));
 		// CHeck if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			return res.status(400).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
+			return res.status(401).json(ERROR[ 401 ]);
 		// Check if list exists
 		const { id, title } = req.body;
 		let list = await prisma.list.findUnique({ where: { id } });
@@ -395,7 +396,7 @@ List.get("/", async (req: express.Request, res: express.Response) => {
 	// Check if user is authorized
 	const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 	if (!verifyToken(token))
-		return res.status(401).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
+		return res.status(401).json(ERROR[ 401 ]);
 	// Send all lists with tasks
 	const lists = await prisma.list.findMany({
 		where: { subscribers: { some: { id: getTokenId(token) } } },
@@ -439,7 +440,7 @@ List.get("/:id", async (req: express.Request, res: express.Response) => {
 	// Check if user is authorized
 	const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 	if (!verifyToken(token))
-		return res.status(401).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
+		return res.status(401).json(ERROR[ 401 ]);
 	// Check if list exists
 	const { id } = req.params;
 	const list = await prisma.list.findUnique({ where: { id }, include: { tasks: true } });
@@ -481,17 +482,17 @@ List.get("/:id", async (req: express.Request, res: express.Response) => {
  *         description: JSON parse error
  */
 List.post("/subscribe",
-	body("userId").exists({ checkFalsy: true }).isString().isLength({ min: 1 }).withMessage("Id must be at least 1 characters long"),
-	body("listId").exists({ checkFalsy: true }).isString().isLength({ min: 1 }).withMessage("Id must be at least 1 characters long"),
+	body("userId").exists({ checkFalsy: true }).isString().withMessage(LIST.ID.message),
+	body("listId").exists({ checkFalsy: true }).isString().withMessage(LIST.ID.message),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: false, messaga: "Incorrect input", errors: errors.array() });
+			return res.status(400).json(ERROR[ 400 ](errors.array()));
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			return res.status(401).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
+			return res.status(401).json(ERROR[ 401 ]);
 		// Check if list exists
 		const { listId, userId } = req.body;
 		const listSubscribe = await prisma.list.findUnique({ where: { id: listId } });

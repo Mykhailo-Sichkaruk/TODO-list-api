@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import express, { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { body, validationResult } from "express-validator";
-import { AUTH } from "../../constants";
+import { AUTH, ERROR } from "../../constants";
 import bcrypt from "bcrypt";
 
 export const Auth = Router();
@@ -89,13 +89,13 @@ const prisma = new PrismaClient();
  *           $ref: '#/components/responses/JSONParseError'
 */
 Auth.post("/register",
-	body("login").exists().isLength(AUTH.LOGIN).withMessage("Login must be min 3, max 255 characters long"),
-	body("password").exists().isLength(AUTH.PASSWORD).withMessage("Login must be min 3, max 255 characters long"),
+	body("login").exists().isLength(AUTH.LOGIN).withMessage(AUTH.LOGIN.message),
+	body("password").exists().isLength(AUTH.PASSWORD).withMessage(AUTH.PASSWORD.message),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: false, messaga: "Incorrect input", errors: errors.array() });
+			return res.status(400).json(ERROR[ 400 ](errors.array()));
 		// Check if user is already registered
 		const { login, password } = req.body;
 		const user = await prisma.user.findUnique({ where: { login } });
@@ -111,7 +111,6 @@ Auth.post("/register",
 			user: { login: newUser.login, id: newUser.id },
 		});
 	});
-
 
 /**
  * @swagger
@@ -145,13 +144,13 @@ Auth.post("/register",
  *           $ref: '#/components/responses/JSONParseError'
 */
 Auth.post("/login",
-	body("login").exists().isLength(AUTH.LOGIN).withMessage("Login must be at least 3 characters long"),
-	body("password").exists().isLength(AUTH.PASSWORD).withMessage("Password must be at least 3 characters long"),
+	body("login").exists().isLength(AUTH.LOGIN).withMessage(AUTH.LOGIN.message),
+	body("password").exists().isLength(AUTH.PASSWORD).withMessage(AUTH.PASSWORD.message),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: false, messaga: "Invalid request", errors: errors.array() });
+			return res.status(400).json(ERROR[ 400 ](errors.array()));
 		// Check if user is registered
 		const { login, password } = req.body;
 		const user = await prisma.user.findUnique({ where: { login } });

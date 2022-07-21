@@ -2,6 +2,7 @@ import express, { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { getTokenId, verifyToken  } from "./Auth";
 import { body, Meta, validationResult } from "express-validator";
+import { ERROR, TASK } from "../../constants";
 
 const prisma = new PrismaClient();
 export const Task = Router();
@@ -105,20 +106,20 @@ export const Task = Router();
  *         description: JSON parse error
  */
 Task.post("/",
-	body("title").isString().isLength({ min: 1 }).withMessage("Title must be at least 1 characters long"),
-	body("body").isString().isLength({ min: 1 }).withMessage("Body must be at least 1 characters long"),
-	body("listId").notEmpty().withMessage("ListId must be provided"),
-	body("status").isIn(["ACTIVE", "DONE", "CLOSED", "IN_PROGRESS", undefined]).withMessage("Status must be in : [ACTIVE, DONE, CLOSED, IN_PROGRESS]"),
+	body("title").isString().isLength(TASK.TITLE).withMessage(TASK.TITLE.message),
+	body("body").isString().isLength(TASK.BODY).withMessage(TASK.BODY.message),
+	body("listId").notEmpty().withMessage("ListId must be provided as string"),
+	body("status").isIn(TASK.STATUS.values).withMessage(TASK.STATUS.message),
 	body("deadline").customSanitizer(checkDeadline).exists().withMessage("Deadline must be a valid date or empty"),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: false, message: "Invalid input", errors: errors.array() });
+			return res.status(400).json(ERROR[ 400 ](errors.array()));
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			return res.status(401).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
+			return res.status(401).json({ success: false, message: ERROR[ 401 ].message });
 		const { title, body, listId, status, deadline } = req.body;
 		const authorId = getTokenId(token);
 		// Check if list exists
@@ -166,16 +167,16 @@ Task.post("/",
  *         description: JSON parse error
 */
 Task.delete("/",
-	body("id").notEmpty().withMessage("id of task must be provided"),
+	body("id").notEmpty().withMessage(TASK.ID.message),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: false, message: "Invalid input", errors: errors.array() });
+			return res.status(400).json(ERROR[ 400 ](errors.array()));
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			return res.status(401).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
+			return res.status(401).json(ERROR[ 401 ]);
 		const { id } = req.body;
 		// Check if task exists
 		const task = await prisma.task.findUnique({ where: { id } });
@@ -221,16 +222,16 @@ Task.delete("/",
  */
 Task.put("/",
 	body("id").exists().withMessage("id of task must be provided"),
-	body("status").isIn(["ACTIVE", "DONE", "CLOSED", "IN_PROGRESS", undefined]).withMessage("Status must be in : [ACTIVE, DONE, CLOSED, IN_PROGRESS]"),
+	body("status").isIn(TASK.STATUS.values).withMessage(TASK.STATUS.message),
 	async (req: express.Request, res: express.Response) => {
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json({ success: false, message: "Invalid input", errors: errors.array() });
+			return res.status(400).json(ERROR[ 400 ](errors.array()));
 		// Check if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
-			return res.status(401).json({ success: false, message: "Unauthorized. Please register or login and add response token to header." });
+			return res.status(401).json(ERROR[ 401 ]);
 		const { id, status } = req.body;
 		// Check if task exists
 		const task = await prisma.task.findUnique({ where: { id } });
@@ -239,7 +240,7 @@ Task.put("/",
 		// Check if user is member of list
 		const user =  await prisma.list.findFirst({ where: { id: task.listId, subscribers: { some: { id: getTokenId(token) } } } });
 		if (!user)
-			return res.status(404).json({ success: false, message: `You are not member of ${task.id}. \nPlease ask author of this Todo-list to add you` });
+			return res.status(403).json({ success: false, message: `You are not member of ${task.id}. \nPlease ask author of this Todo-list to add you` });
 		// Update task
 		await prisma.task.update({ where: { id }, data: { status } });
 		res.status(200).json({ success: true, message: "Task updated" });
