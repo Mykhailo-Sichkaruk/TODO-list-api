@@ -1,3 +1,5 @@
 node_modules
 .dccache
 task.md
+coverage
+prisma/migrations/
