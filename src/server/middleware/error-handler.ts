@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
+import { ERROR } from "../../constants";
 import { CustomError } from "./custom-error.model";
 
 /**
@@ -24,8 +25,7 @@ function handleError(
 	}
 
 	res.status(444).json({
-		success: "false",
-		message: "Error",
+		...ERROR[ 444 ],
 		error: customError.message,
 	});
 }
