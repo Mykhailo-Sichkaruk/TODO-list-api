@@ -106,7 +106,7 @@ Auth.post("/register",
 		const token = jwt.sign({ id: newUser.id }, `${process.env.JWT_SECRET}`, { expiresIn: AUTH.TOKEN_VALIDATION_TIME });
 		res.status(200).header("Authorization", `Bearer ${token}`).json({
 			success: true,
-			message: `You've signed up, your token is valid for ${AUTH.TOKEN_VALIDATION_TIME}`,
+			message: AUTH.SIGNED_UP,
 			token,
 			user: { login: newUser.login, id: newUser.id },
 		});
@@ -163,7 +163,7 @@ Auth.post("/login",
 		const token = jwt.sign({ id: user.id }, `${process.env.JWT_SECRET}`, { expiresIn: AUTH.TOKEN_VALIDATION_TIME });
 		res.status(200).header("Authorization", `Bearer ${token}`).json({
 			success: true,
-			message: `You've signed in, your token is valid for ${AUTH.TOKEN_VALIDATION_TIME}`,
+			message: AUTH.SIGNED_IN,
 			token,
 			user: { login: user.login, id: user.id },
 		});

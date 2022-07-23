@@ -23,15 +23,42 @@ const ERROR = deepFreeze({
 		message: "Forbidden",
 		status: 403,
 	},
+	404: {
+		LOGIN: {
+			success: false,
+			message: "User not found",
+		},
+	},
+	406: {
+		REGISTER: {
+			success: false,
+			message: "User already exists",
+		},
+		LOGIN: {
+			success: false,
+			message: "Wrong password",
+		},
+	},
 	444: {
+		success: false,
 		message: "JSON parse error",
-		status: 444,
 	},
 });
 
 const MSG = deepFreeze({
 	exists: "Must exist and be not falsy",
 	isString: "Must be string",
+});
+
+const TEST = deepFreeze({
+	USER_1: {
+		LOGIN: "testUser1",
+		PASSWORD: "testUser1",
+	},
+	USER_2: {
+		LOGIN: "testUser2",
+		PASSWORD: "testUser2",
+	},
 });
 
 const REQ = Object.freeze({ // Prototype for request objects
@@ -56,10 +83,16 @@ const auth = () => {
 	const authProp = { // Properties for authentication request body
 		LOGIN: Object.create(REQ.TITLE), // Using ptototypal inheritance to create a new object with the same properties as REQ.TITLE
 		PASSWORD: Object.create(REQ.TITLE),
-		TOKEN_VALIDATION_TIME: "1h",
+		TOKEN_VALIDATION_TIME: "1h", // Used to set token expiration time
+		SIGNED_UP: "Signed up",
+		SIGNED_IN: "Signed in",
 	};
+	authProp.SIGNED_UP = `You've registered, your token is valid for ${authProp.TOKEN_VALIDATION_TIME}`;
+	authProp.SIGNED_IN =  `You've logined in, your token is valid for ${authProp.TOKEN_VALIDATION_TIME}`;
 	authProp.LOGIN.message = "Login must be min 3, max 255 characters long";
 	authProp.PASSWORD.message = "Password must be min 3, max 255 characters long";
+
+
 	return deepFreeze(authProp);
 };
 
@@ -73,9 +106,8 @@ const task = () => {
 };
 
 const AUTH = auth();
-
 const TASK = task();
 const LIST = deepFreeze(Object.create(REQ));
 
 
-export { AUTH, LIST, TASK, ERROR, MSG };
+export { AUTH, LIST, TASK, ERROR, MSG, TEST };

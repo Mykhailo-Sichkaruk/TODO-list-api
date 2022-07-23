@@ -501,16 +501,20 @@ List.post("/subscribe",
 		const { listId, userId } = req.body;
 		const listSubscribe = await prisma.list.findUnique({ where: { id: listId } });
 		if (!listSubscribe)
-			return res.status(400).json({ success: false, message: "List not found" });
+			return res.status(404).json({ success: false, message: "List not found" });
 		// Check if request sender is a member of the list
 		const author =  await prisma.list.findFirst({ where: { id: listId, subscribers: { some: { id: getTokenId(token) } } } });
 		if (!author)
-			return res.status(400).json({ success: false, message: `You are not member of ${listSubscribe.title}. \nPlease ask author of this Todo-list to add you` });
+			return res.status(406).json({ success: false, message: `You are not member of ${listSubscribe.title}. \nPlease ask author of this Todo-list to add you` });
 		// Check if new member exists
 		const user = await prisma.user.findUnique({ where: { id: userId } });
 		if (!user)
-			return res.status(400).json({ success: false, message: "User not found" });
-		// Add new member to list
+			return res.status(404).json({ success: false, message: "User not found" });
+		// Check if user is already member of the list
+		const member = await prisma.list.findFirst({ where: { id: listId, subscribers: { some: { id: userId } } } });
+		if (member)
+			return res.status(406).json({ success: false, message: "User is already member of this list" });
+			// Subscribe user to list
 		const list = await prisma.list.update({ where: { id: listId }, data: { subscribers: { connect: { id: userId } } } });
 		res.status(200).json({ success: true, message: list });
 	}
