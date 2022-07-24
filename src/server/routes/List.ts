@@ -26,7 +26,7 @@ export const List = Router();
  *           example: "Do something"
  *         deadline:
  *           type: date
- *           example: "2020-01-01:00:00:00"
+ *           example: "2023-01-01:00:00:00"
  *         authorId:
  *           type: string
  *           example: "cl5peyfcp00025wtajaia1jcc"

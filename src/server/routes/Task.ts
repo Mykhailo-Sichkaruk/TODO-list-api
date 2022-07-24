@@ -34,7 +34,7 @@ export const Task = Router();
  *           example: "cl5pf2wpf000004tal8ai4dus"
  *         deadline:
  *           type: Date
- *           example: "2020-01-01T00:00:00.000Z"
+ *           example: "2023-01-01T00:00:00.000Z"
  *         status:
  *           type: string
  *           enum:
