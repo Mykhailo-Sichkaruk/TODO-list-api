@@ -2,6 +2,8 @@ import { Server } from "../server/server";
 import supertest from "supertest";
 import assert from "assert";
 import { AUTH, ERROR, TEST } from "../constants";
+import { Method } from "./../../typings/common";
+
 jest.setTimeout(200000);
 
 const app = new Server();
@@ -15,15 +17,15 @@ describe("Auth", () => {
 	describe("register: POST", () => {
 		it("should 200: Sign up", register200);
 		it("should 406: User already exists", register406);
-		it("should 400: Invalid input", post400.bind(null, "/auth/register"));
-		it("should 444: JSON parse error", post444.bind(null, "/auth/register"));
+		it("should 400: Invalid input", error400.bind(null, "/auth/register", Method.POST));
+		it("should 444: JSON parse error", error444.bind(null, "/auth/register", Method.POST));
 	});
 	describe("login", () => {
 		it("should 200: Sign in", login200);
-		it("should 400: Invalid input", post400.bind(null, "/auth/login"));
+		it("should 400: Invalid input", error400.bind(null, "/auth/login", Method.POST));
 		it("should 406: Wrong password", login406);
 		it("should 404: User not found", login404);
-		it("should 444: JSON parse error", post444.bind(null, "/auth/login"));
+		it("should 444: JSON parse error", error444.bind(null, "/auth/login", Method.POST));
 	});
 });
 
@@ -80,9 +82,14 @@ async function register406() {
 		});
 }
 
-async function post400(url: string) {
-	await supertest(app.app)
-		.post(url)
+/**
+ * Send request to API with Invalid Input and check if it returns `400: Invalid input`
+ * Throw assert error if response is not `400: Invalid input`
+ * @param url - url of API endpoint
+ * @param method - Method of API endpoint
+ */
+async function error400(url: string, method: Method) {
+	await supertest(app.app)[ method ](url)
 		.set("Authorization", `Bearer ${user1.token}`)
 		.send({
 			login: "",
@@ -106,9 +113,14 @@ async function post400(url: string) {
 		});
 }
 
-async function post444(url: string) {
-	await supertest(app.app)
-		.post(url)
+/**
+ * Send request to API with invalid JSON and check if it returns `444: JSON parse error`
+ * Throw assert error if response is not `444: JSON parse error`
+ * @param url - url of API endpoint
+ * @param method - Method of API endpoint
+ */
+async function error444(url: string, method: Method) {
+	await supertest(app.app)[ method ](url)
 		.set("Content-Type", "application/json")
 		.set("Accept", "application/json")
 		.send("undefined")
@@ -160,4 +172,4 @@ async function isRegistered(login: string, password: string): Promise<boolean> {
 		.then(res => res.status === 200);
 }
 
-export { app, user1, user2 };
+export { app, user1, user2, error400, error444 };
