@@ -31,6 +31,17 @@ export class Server {
 			console.log(`Server running on localhost:${process.env.PORT}`);
 			console.log(`Swagger docs available at http://localhost:${process.env.PORT}/docs/`);
 		});
+
+		return this;
+	}
+
+	public testStart() {
+		this.setRequestlogger();
+		this.setConfig();
+		this.setRoutes();
+		this.setSwagger();
+
+		return this;
 	}
 
 	private setConfig() {
@@ -93,4 +104,9 @@ export class Server {
 		const swaggerSpec = swaggerJSDoc(swaggerOptions);
 		this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 	}
+
+	public end() {
+		this.prisma.$disconnect();
+	}
+
 }
