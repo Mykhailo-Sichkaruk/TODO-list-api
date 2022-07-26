@@ -9,6 +9,8 @@ declare global {
     }
   }
   type UserTest = {
+  login: string;
+  password: string;
   id: string;
   token: string;
 };
