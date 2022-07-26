@@ -68,7 +68,7 @@ export const List = Router();
  *       properties:
  *         success:
  *           type: boolean
- *           example: true
+ *           value: true
  *         message:
  *           type: object
  *           required:
@@ -353,7 +353,7 @@ List.put("/",
 		// Check if input is valid
 		const errors = validationResult(req);
 		if (!errors.isEmpty())
-			return res.status(400).json(ERROR[ 400 ](errors.array()));
+			return res.status(400).type("json").json(ERROR[ 400 ](errors.array()));
 		// CHeck if user is authorized
 		const token = req.headers.authorization?.split(" ")[ 1 ] || "";
 		if (!verifyToken(token))
