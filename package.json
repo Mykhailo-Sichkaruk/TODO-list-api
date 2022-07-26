@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npx prisma migrate dev --name init && ts-node src/server/app.ts",
     "dev": "nodemon src/server/app.ts",
-    "test": "jest"
+    "test": "jest --verbose --coverage --forceExit"
   },
   "keywords": [
     "api",
