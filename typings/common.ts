@@ -5,4 +5,9 @@ enum Method{
   DELETE = "delete"
 }
 
-export { Method };
+enum AuthMethod {
+  LOGIN = "login",
+  REGISTER = "register"
+}
+
+export { Method, AuthMethod };
