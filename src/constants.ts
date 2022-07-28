@@ -38,6 +38,12 @@ const ERROR = deepFreeze({
 			success: false,
 			message: "Wrong password",
 		},
+		LIST(list: any) {
+			return {
+				success: false,
+				message: `You are not member of ${list.title}(${list.id}). \nPlease ask author of this Todo-list to add you`,
+			};
+		},
 	},
 	444: {
 		success: false,

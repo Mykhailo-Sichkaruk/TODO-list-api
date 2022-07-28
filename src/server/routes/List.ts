@@ -306,7 +306,7 @@ List.delete("/",
 		// Check if user is member of list
 		const author =  await prisma.list.findFirst({ where: { id, subscribers: { some: { id: getTokenId(token) } } } });
 		if (!author)
-			return res.status(406).json({ success: false, message: `You are not member of ${list.title}(${list.id}). \nPlease ask author of this Todo-list to add you` });
+			return res.status(406).json(ERROR[ 406 ].LIST(list));
 		// Delete list
 		await prisma.list.delete({ where: { id } });
 		res.status(200).json({ success: true, message: list });
