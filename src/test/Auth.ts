@@ -31,6 +31,7 @@ class Auth {
 
 	static async #login200() {
 		Auth.testUser[ 0 ] = await Auth.#authUser("login", Auth.testUser[ 0 ].login, Auth.testUser[ 0 ].password);
+		Auth.testUser[ 1 ] = await Auth.#authUser("login", Auth.testUser[ 1 ].login, Auth.testUser[ 1 ].password);
 	}
 
 	static async #login406() {
