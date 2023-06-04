@@ -16,7 +16,7 @@
   "license": "MIT",
   "dependencies": {
     "-": "^0.0.1",
-    "@prisma/client": "^4.1.0",
+    "@prisma/client": "^4.14.0",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^14.2.5",
